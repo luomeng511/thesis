@@ -1,9 +1,11 @@
 import tensorflow as tf
+from tensorflow.contrib.rnn.python.ops import rnn_cell
 from tensorflow.examples.tutorials.mnist import input_data
+#from tensorflow.models.rnn import rnn_cell
 
 
 # This is data
-minst = input_data.read_data_sets('MNIST_data', one_hot=True)
+mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
 
 # Hyperparameters
 lr = 0.001                              # learning rate
@@ -43,15 +45,20 @@ def RNN(X, weights, biases):
     # X_in --> (128 batchs, 28 steps, 128 hidden)
     X_in = tf.reshape(X_in, [-1, n_steps, n_hidden_units])
 
-    pass
 
     # cell
-    pass
+
+    lstm_cell = rnn_cell.CoupledInputForgetGateLSTMCell(n_hidden_units, forget_bias=1.0)
+    # lstm is divided into two parts(c_state, m_state)
+    _init_state = lstm_cell.zero_state(batch_size, dtype=tf.float32)
+    outputs, states = tf.nn.dynamic_rnn(lstm_cell, X_in, initial_state=_init_state, time_major=False)       # time_major means time step in the first dimension
+
+
 
     # hidden layer for output as the final results
-    pass
+    results = tf.matmul(states[1], weights['out']) + biases['out']
 
-    results = None
+
     return results
 
 
@@ -63,9 +70,21 @@ train_op = tf.train.AdamOptimizer(lr).minimize(cost)   ####
 correct_prediton = tf.equal(tf.argmax(prediton, 1), tf.argmax(y, 1))   ###
 accuracy = tf.reduce_mean(tf.cast(correct_prediton, tf.float32))    #####
 
-
-init = tf.initialize_all_variables()
-with tf.Session() as sess:
-    sess.run(init)
-    step = 0
+if __name__ == '__main__':
+    init = tf.initialize_all_variables()
+    with tf.Session() as sess:
+        sess.run(init)
+        step = 0
+        while step * batch_size < trainning_iters:
+            batch_xs, batch_ys = mnist.train.next_batch(batch_size)
+            batch_xs = batch_xs.reshape([batch_size, n_steps, n_inputs])
+            sess.run([train_op], feed_dict={
+                x: batch_xs,
+                y: batch_ys
+            })
+            if step % 20 == 0:
+                print(sess.run(accuracy, feed_dict={
+                    x: batch_xs,
+                    y: batch_ys
+                }))
 
