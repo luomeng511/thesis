@@ -4,7 +4,7 @@ from tensorflow.examples.tutorials.mnist import input_data
 # the data
 mnist = input_data.read_data_sets('MNIST', one_hot=True)
 
-#
+# Graph input
 x = tf.placeholder(tf.float32, [None, 784])
 y_ = tf.placeholder(tf.float32, [None, 10])
 
@@ -12,15 +12,15 @@ y_ = tf.placeholder(tf.float32, [None, 10])
 W = tf.Variable(tf.zeros([784, 10]))
 b = tf.Variable(tf.zeros([10]))
 
+# model
 y = tf.nn.softmax(tf.matmul(x, W)+b)
 
+# training method
 cross_entropy = -tf.reduce_sum(y_*tf.log(y))
 train_step = tf.train.GradientDescentOptimizer(0.01).minimize(cross_entropy)
 
-
-
+# run the graph
 init = tf.global_variables_initializer()
-
 with tf.Session() as sess:
     sess.run(init)
     for i in range(1000):
